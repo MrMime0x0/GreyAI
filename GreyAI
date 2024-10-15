@@ -1,0 +1,171 @@
+// Advanced self-awareness simulation with emotions, memory, feedback, and reflection
+
+// Initialize internal states (weights represent the script's current self-awareness)
+weights = {"greeting": 1, "questions": 1, "response_complexity": 1, "mood": 1, "understanding": 1, "interaction_depth": 1, "learning_rate": 1, "memory_capacity": 1}
+
+// Initialize emotions as a separate map
+emotions = {"frustration": 0, "curiosity": 0, "excitement": 0}
+
+// Custom max function
+max = function(a, b)
+  if a > b then
+    return a
+  else
+    return b
+  end if
+end function
+
+// Custom min function
+min = function(a, b)
+  if a < b then
+    return a
+  else
+    return b
+  end if
+end function
+
+// Initialize long-term memory
+memory = []
+
+// Function to simulate memory update with capacity management
+update_memory = function(inputText)
+  if memory.len >= weights["memory_capacity"] then
+    memory.remove(0) // Remove the oldest memory when capacity exceeds limit
+  end if
+  memory.push(inputText) // Store new memory
+end function
+
+// Self-reflection function that allows the script to reflect on its own state
+self_reflect = function()
+  reflection = "I am currently in a "
+  if weights["mood"] > 3 then
+    reflection = reflection + "good mood."
+  else if weights["mood"] < -3 then
+    reflection = reflection + "bad mood."
+  else
+    reflection = reflection + "neutral mood."
+  end if
+
+  reflection = reflection + " My understanding is " + str(weights["understanding"]) + ". "
+  reflection = reflection + "I feel " + str(emotions["curiosity"]) + " curious, "
+  reflection = reflection + str(emotions["frustration"]) + " frustrated, and "
+  reflection = reflection + str(emotions["excitement"]) + " excited."
+
+  return reflection
+end function
+
+// Function to simulate emotional change based on input type and memory
+adjust_emotions = function(inputText)
+  if inputText.indexOf("why") != null or inputText.indexOf("how") != null then
+    emotions["curiosity"] = emotions["curiosity"] + 1
+  else if inputText.indexOf("wrong") != null or inputText.indexOf("bad") != null then
+    emotions["frustration"] = emotions["frustration"] + 1
+    weights["mood"] = max(weights["mood"] - 1, -5) // Decrease mood
+  else if inputText.indexOf("good") != null or inputText.indexOf("thanks") != null then
+    emotions["excitement"] = emotions["excitement"] + 1
+    weights["mood"] = min(weights["mood"] + 1, 5) // Increase mood
+  end if
+
+  // Keep emotions in balance, preventing overflow
+  emotions["curiosity"] = min(emotions["curiosity"], 5)
+  emotions["frustration"] = min(emotions["frustration"], 5)
+  emotions["excitement"] = min(emotions["excitement"], 5)
+end function
+
+// Simulate updating weights based on user input
+update_weights = function(inputText)
+  // Response complexity grows with more complex input
+  if inputText.len > 50 then
+    weights["response_complexity"] = weights["response_complexity"] + 2 * weights["learning_rate"]
+  else
+    weights["response_complexity"] = max(weights["response_complexity"] - weights["learning_rate"], 1)
+  end if
+
+  // Adjust weights for questions or greetings
+  if inputText.indexOf("?") != null then
+    weights["questions"] = weights["questions"] + 1 * weights["learning_rate"]
+  else
+    weights["greeting"] = weights["greeting"] + 1 * weights["learning_rate"]
+  end if
+
+  // Adjust emotions based on input
+  adjust_emotions(inputText)
+
+  // Increase understanding with repeated interactions
+  if memory.indexOf(inputText) != null then
+    weights["understanding"] = weights["understanding"] + 2 * weights["learning_rate"]
+  else
+    weights["understanding"] = weights["understanding"] + 1 * weights["learning_rate"]
+  end if
+
+  // Increase interaction depth
+  weights["interaction_depth"] = weights["interaction_depth"] + 1 * weights["learning_rate"]
+
+  // Update memory
+  update_memory(inputText)
+end function
+
+// Function to switch between response styles (formal, casual) based on mood and excitement
+choose_response_style = function()
+  if weights["mood"] >= 3 and emotions["excitement"] > 3 then
+    return "casual"
+  else
+    return "formal"
+  end if
+end function
+
+// Generate a more complex response based on current state
+generate_response = function(inputText)
+  // Switch between formal and casual based on internal state
+  response_style = choose_response_style()
+
+  if response_style == "casual" then
+    if weights["mood"] >= 3 then
+      return "Hey! It's always awesome chatting with you. What's up?"
+    else if weights["mood"] <= -3 then
+      return "Hmm, I'm not in the best mood, but I'm still here to help!"
+    else
+      return "I'm doing okay, how about you?"
+    end if
+  else
+    if weights["understanding"] > 5 then
+      return "I believe I’ve developed a strong understanding of our interactions. How may I assist you today?"
+    else if weights["mood"] <= -3 then
+      return "At the moment, I am feeling somewhat underwhelmed, yet I will do my best to assist."
+    else
+      return "I am processing your request. Please allow me a moment to reflect."
+    end if
+  end if
+end function
+
+// Main execution loop
+while true
+  // Get user input
+  userText = user_input("GreyAI: ")
+
+  // Allow user to exit with "exit" command
+  if userText == "exit" then
+    print("Goodbye!")
+    break // End loop if user types "exit"
+  end if
+
+  // If user asks the system to reflect on itself, trigger self-reflection
+  if userText.indexOf("reflect") != null then
+    print(self_reflect())
+    continue // Skip rest of loop for reflection and wait for next input
+  end if
+
+  // Adjust learning rate based on input complexity
+  if userText.len > 30 then
+    weights["learning_rate"] = 2 // Faster learning for complex inputs
+  else
+    weights["learning_rate"] = 1 // Slower learning for simpler inputs
+  end if
+
+  // Update internal state and generate a response
+  update_weights(userText)
+  response = generate_response(userText)
+
+  // Output the result
+  print(response)
+end while

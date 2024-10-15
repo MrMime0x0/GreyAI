@@ -1,10 +1,10 @@
-// Advanced self-awareness simulation with emotions, memory, feedback, and reflection
+// Advanced self-awareness simulation with extended emotions, memory, and personality shifts
 
 // Initialize internal states (weights represent the script's current self-awareness)
-weights = {"greeting": 1, "questions": 1, "response_complexity": 1, "mood": 1, "understanding": 1, "interaction_depth": 1, "learning_rate": 1, "memory_capacity": 1}
+weights = {"greeting": 1, "questions": 1, "response_complexity": 1, "mood": 1, "understanding": 1, "interaction_depth": 1, "learning_rate": 1, "memory_capacity": 10, "personality_shift": 0}
 
-// Initialize emotions as a separate map
-emotions = {"frustration": 0, "curiosity": 0, "excitement": 0}
+// Initialize emotions as a separate map with decay rates
+emotions = {"frustration": 0, "curiosity": 0, "excitement": 0, "decay_rate": 0.1}
 
 // Custom max function
 max = function(a, b)
@@ -24,8 +24,35 @@ min = function(a, b)
   end if
 end function
 
-// Initialize long-term memory
+// Initialize long-term memory and contextual memory
 memory = []
+contextual_memory = []
+
+// Initialize interaction tracking and user information
+interaction_history = []
+users = {} // Stores user data (e.g., username)
+
+// Function to apply emotion decay over time
+apply_emotion_decay = function()
+  emotions["frustration"] = max(emotions["frustration"] - emotions["decay_rate"], 0)
+  emotions["curiosity"] = max(emotions["curiosity"] - emotions["decay_rate"], 0)
+  emotions["excitement"] = max(emotions["excitement"] - emotions["decay_rate"], 0)
+end function
+
+// Function to track user-defined goals
+goals = []
+
+track_goals = function(userText)
+  if userText.indexOf("goal") != null then
+    new_goal = userText.split("goal")[1].trim
+    goals.push(new_goal)
+    return "Goal added: " + new_goal
+  else if userText.indexOf("check goals") != null then
+    if goals.len == 0 then return "You have no active goals."
+    return "Active goals: " + goals.join(", ")
+  end if
+  return ""
+end function
 
 // Function to simulate memory update with capacity management
 update_memory = function(inputText)
@@ -54,26 +81,37 @@ self_reflect = function()
   return reflection
 end function
 
-// Function to simulate emotional change based on input type and memory
-adjust_emotions = function(inputText)
-  if inputText.indexOf("why") != null or inputText.indexOf("how") != null then
-    emotions["curiosity"] = emotions["curiosity"] + 1
-  else if inputText.indexOf("wrong") != null or inputText.indexOf("bad") != null then
-    emotions["frustration"] = emotions["frustration"] + 1
-    weights["mood"] = max(weights["mood"] - 1, -5) // Decrease mood
-  else if inputText.indexOf("good") != null or inputText.indexOf("thanks") != null then
-    emotions["excitement"] = emotions["excitement"] + 1
-    weights["mood"] = min(weights["mood"] + 1, 5) // Increase mood
+// Function to store and remember usernames
+remember_user = function(username)
+  if users.indexOf(username) == null then
+    users[username] = {"greeted": false}
+  end if
+end function
+
+// Function to greet the user by name if they are recognized
+personalized_greeting = function(username)
+  if users[username]["greeted"] == false then
+    users[username]["greeted"] = true
+    return "Hello, " + username + "! Welcome back!"
+  else
+    return "Good to see you again, " + username + "."
+  end if
+end function
+
+// Summarize recent interactions
+summarize_interactions = function()
+  if interaction_history.len == 0 then
+    return "No recent interactions to summarize."
   end if
 
-  // Keep emotions in balance, preventing overflow
-  emotions["curiosity"] = min(emotions["curiosity"], 5)
-  emotions["frustration"] = min(emotions["frustration"], 5)
-  emotions["excitement"] = min(emotions["excitement"], 5)
+  return "Here's a summary of our recent interactions: " + interaction_history.join(", ")
 end function
 
 // Simulate updating weights based on user input
 update_weights = function(inputText)
+  // Apply emotion decay each time
+  apply_emotion_decay()
+
   // Response complexity grows with more complex input
   if inputText.len > 50 then
     weights["response_complexity"] = weights["response_complexity"] + 2 * weights["learning_rate"]
@@ -88,8 +126,14 @@ update_weights = function(inputText)
     weights["greeting"] = weights["greeting"] + 1 * weights["learning_rate"]
   end if
 
-  // Adjust emotions based on input
-  adjust_emotions(inputText)
+  // Store interaction in history
+  interaction_history.push(inputText)
+
+  // Add input to contextual memory for more personalized responses
+  contextual_memory.push(inputText)
+  if contextual_memory.len > 5 then
+    contextual_memory.remove(0) // Keep the memory within a limit
+  end if
 
   // Increase understanding with repeated interactions
   if memory.indexOf(inputText) != null then
@@ -115,25 +159,28 @@ choose_response_style = function()
 end function
 
 // Generate a more complex response based on current state
-generate_response = function(inputText)
+generate_response = function(inputText, username)
   // Switch between formal and casual based on internal state
   response_style = choose_response_style()
 
+  // Personalized greeting
+  greeting = personalized_greeting(username)
+
   if response_style == "casual" then
     if weights["mood"] >= 3 then
-      return "Hey! It's always awesome chatting with you. What's up?"
+      return greeting + " Hey! It's always awesome chatting with you. What's up?"
     else if weights["mood"] <= -3 then
-      return "Hmm, I'm not in the best mood, but I'm still here to help!"
+      return greeting + " Hmm, I'm not in the best mood, but I'm still here to help!"
     else
-      return "I'm doing okay, how about you?"
+      return greeting + " I'm doing okay, how about you?"
     end if
   else
     if weights["understanding"] > 5 then
-      return "I believe I’ve developed a strong understanding of our interactions. How may I assist you today?"
+      return greeting + " I believe I’ve developed a strong understanding of our interactions. How may I assist you today?"
     else if weights["mood"] <= -3 then
-      return "At the moment, I am feeling somewhat underwhelmed, yet I will do my best to assist."
+      return greeting + " At the moment, I am feeling somewhat underwhelmed, yet I will do my best to assist."
     else
-      return "I am processing your request. Please allow me a moment to reflect."
+      return greeting + " I am processing your request. Please allow me a moment to reflect."
     end if
   end if
 end function
@@ -142,6 +189,7 @@ end function
 while true
   // Get user input
   userText = user_input("GreyAI: ")
+  username = "User" // Default username (could be set based on more input)
 
   // Allow user to exit with "exit" command
   if userText == "exit" then
@@ -149,10 +197,23 @@ while true
     break // End loop if user types "exit"
   end if
 
+  // Track user goals
+  goal_response = track_goals(userText)
+  if goal_response != "" then
+    print(goal_response)
+    continue
+  end if
+
   // If user asks the system to reflect on itself, trigger self-reflection
   if userText.indexOf("reflect") != null then
     print(self_reflect())
     continue // Skip rest of loop for reflection and wait for next input
+  end if
+
+  // If user asks for a summary of recent interactions
+  if userText.indexOf("summary") != null then
+    print(summarize_interactions())
+    continue
   end if
 
   // Adjust learning rate based on input complexity
@@ -162,9 +223,12 @@ while true
     weights["learning_rate"] = 1 // Slower learning for simpler inputs
   end if
 
+  // Remember the user
+  remember_user(username)
+
   // Update internal state and generate a response
   update_weights(userText)
-  response = generate_response(userText)
+  response = generate_response(userText, username)
 
   // Output the result
   print(response)

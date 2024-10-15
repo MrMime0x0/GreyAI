@@ -13,3 +13,12 @@ This is a proof of concept of a AI in greyhack, People are free to edit and clon
 - Feedback Response
 - Dynamic Responses
 - Exit Command
+- Personality Shift Over Time
+- Emotion Decay
+- Personalized Greetings
+- Contextual Memory
+- Interaction History Summary
+- Learning from Mistakes
+- Active Goal Tracking
+- Self-Criticism (Reflection)
+- Dynamic Emotional Response

@@ -1,5 +1,5 @@
 # GreyAI
-This is a proof of concept of a AI in greyhack, People are free to edit and clone this repo.
+This is a proof of concept of a AI in greyhack, People are free to edit and clone this repo, While it is not AI in a sense due to the game's limitations its still proof of concept.
 
 ## Features
 - Emotional Simulation
